@@ -1,0 +1,3 @@
+#!/bin/bash
+clang -std=c11 -Wall -pedantic -g -fsanitize=undefined -fsanitize=address $1.c -o $1
+
