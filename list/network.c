@@ -128,8 +128,6 @@ int numEdges(graph *g) {
 
 int existsInArray(int n, int *visited, const int curr) {
     for (int i = 0; i < curr; i++) {
-        printf("curr: %d x: %d visited: %d\n",curr,n, visited[i]);
-        printf("T?: %d\n",(n == visited[i]));
         if (n == visited[i]) return 1;
     }
     return 0;
@@ -138,12 +136,9 @@ int existsInArray(int n, int *visited, const int curr) {
 int nodeSearch(node *n, int *visited, int *curr) {
     int children = n->currentItems;
     for (int i = 0; i < children; i++) {
-        //printf("i: %d pointer: %d node: %d\n",i,*curr, n->x); 
-        //printf("x: %d\n",n->edges[i]->x);
         int r = existsInArray(n->edges[i]->x, visited, *curr);
         if (r == 1) return 0;
         else {
-            //visited = realloc(visited, (*curr + 1) * sizeof(int));
             visited[*curr] = n->edges[i]->x;
             *curr = *curr + 1;
         }
@@ -153,11 +148,16 @@ int nodeSearch(node *n, int *visited, int *curr) {
 
 int isTree(graph *g) {
     int visited[200];
-    //visited = malloc(sizeof(int));
-    int curr = 0;
+    visited[0] = g->array[0]->x;
+    int curr = 1;
 
-    for (int i = 0; i < (g->n - 1); i++) {
+    for (int i = 0; i < (g->n); i++) {
         int r = nodeSearch(g->array[i], visited, &curr);
+        if (r == 0) return 0;
+    }
+
+    for (int i = 0; i < (g->n); i++) {
+        int r = existsInArray(g->array[i]->x, visited, curr);
         if (r == 0) return 0;
     }
     return 1;
@@ -221,6 +221,11 @@ graph *parseString(char string[]) {
     }
 
     return g;
+}
+
+char* trueOrFalse(int i) { 
+    if (i == 0) return "False";
+    else return "True";
 }
 
 //Validates input using regular expression, input must be zero or more "a-b," or "a," ending with "a-b" or "a"
@@ -336,7 +341,7 @@ int main(int n, char *args[n]) {
             printf("Number of nodes: %d\n", g->n);
             printf("Number of edges: %d\n",numEdges(g));
             printf("Average number of edges per node: %.1f\n", avgEdges(g));
-            printf("Is tree?: %d\n", isTree(g));
+            printf("Is tree?: %s\n", trueOrFalse(isTree(g)));
             //printf("Hamiltonian?: %d\n",checkHamiltonian(g));
             freeGraph(g);
         } else {
