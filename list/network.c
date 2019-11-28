@@ -320,6 +320,34 @@ void testNumEdges() {
     freeGraph(g);
 }
 
+void testIsTree() {
+    char a[] = "1-2,1-3";
+    graph *g = parseString(a);
+    assert(isTree(g) == 1);
+    freeGraph(g);
+
+    char b[] = "1";
+    g = parseString(b);
+    assert(isTree(g) == 1);
+    freeGraph(g);
+
+    char c[] = "1-2,1-3,4";
+    g = parseString(c);
+    assert(isTree(g) == 0);
+    freeGraph(g);
+
+    char d[] = "1-2,1-3,3-1";
+    g = parseString(d);
+    assert(isTree(g) == 0);
+    freeGraph(g);
+
+    char e[] = "1-2,1-3,3-2";
+    g = parseString(e);
+    assert(isTree(g) == 0);
+    freeGraph(g);
+
+}
+
 void test() {
     testCheckInput();
     testNode();
@@ -328,6 +356,7 @@ void test() {
     testGetNode();
     testAvgEdges();
     testNumEdges();
+    testIsTree();
     printf("All tests pass\n");
 }
 
