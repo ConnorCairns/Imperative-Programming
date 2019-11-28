@@ -143,7 +143,7 @@ int nodeSearch(node *n, int *visited, int *curr) {
         int r = existsInArray(n->edges[i]->x, visited, *curr);
         if (r == 1) return 0;
         else {
-            visited = realloc(visited, (*curr + 1) * sizeof(int));
+            //visited = realloc(visited, (*curr + 1) * sizeof(int));
             visited[*curr] = n->edges[i]->x;
             *curr = *curr + 1;
         }
@@ -152,8 +152,8 @@ int nodeSearch(node *n, int *visited, int *curr) {
 }
 
 int isTree(graph *g) {
-    int *visited;
-    visited = malloc(sizeof(int));
+    int visited[200];
+    //visited = malloc(sizeof(int));
     int curr = 0;
 
     for (int i = 0; i < (g->n - 1); i++) {
