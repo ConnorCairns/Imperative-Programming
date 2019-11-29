@@ -362,7 +362,7 @@ int main(int n, char *args[n]) {
         int r = checkInput(args[1]);
         if (r == 0) {
             graph *g = parseString(args[1]);
-            printf("Visual represntation:\n");
+            printf("Visual representation:\n");
             printStructure(g);
             printf("Number of nodes: %d\n", g->n);
             printf("Number of edges: %d\n",numEdges(g));
@@ -373,8 +373,11 @@ int main(int n, char *args[n]) {
             printf("Error with inputs\n");
             exit(1);
         }
-    } else { 
+    } else if (n == 1) { 
         test();
+    } else {
+        printf("Error with inputs\n");
+        exit(1);
     }
    return 0;
 }
