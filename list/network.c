@@ -15,6 +15,11 @@ typedef struct graph {
     struct node **array;
 } graph;
 
+typedef struct visited {
+    int curr;
+    int *array;
+} visited;
+
 node *newNode(int x) {
     node *new;
     new = malloc(sizeof(node));
@@ -32,6 +37,20 @@ graph *newGraph() {
     new-> n = 0;
 
     return new;
+}
+
+visited *newVisited() {
+    visited *new;
+    new = malloc(sizeof(visited));
+    new->curr = 0;
+    new->array = malloc(sizeof(int));
+
+    return new;
+}
+
+void freeVisited(visited *v) {
+    free(v->array);
+    free(v);
 }
 
 void freeGraph(graph *g) {
@@ -133,13 +152,14 @@ int existsInArray(int n, int *visited, const int curr) {
     return 0;
 }
 
-int nodeSearch(node *n, int *visited, int *curr) {
-    int children = n->currentItems;
-    for (int i = 0; i < children; i++) {
-        int r = existsInArray(n->edges[i]->x, visited, *curr);
+int nodeSearch(node *n, visited *visited, int *curr) {
+    int items = n->currentItems;
+    for (int i = 0; i < items; i++) {
+        int r = existsInArray(n->edges[i]->x, visited->array, *curr);
         if (r == 1) return 0;
         else {
-            visited[*curr] = n->edges[i]->x;
+            visited->array = realloc(visited->array, (*curr + 1) * sizeof(int));
+            visited->array[*curr] = n->edges[i]->x;
             *curr = *curr + 1;
         }
     } 
@@ -147,60 +167,46 @@ int nodeSearch(node *n, int *visited, int *curr) {
 }
 
 int isTree(graph *g) {
-    int visited[200];
-    visited[0] = g->array[0]->x;
-    int curr = 1;
+    visited *visited = newVisited();
+    visited->array[0] = g->array[0]->x;
+    visited->curr++;
 
     for (int i = 0; i < (g->n); i++) {
-        int r = nodeSearch(g->array[i], visited, &curr);
-        if (r == 0) return 0;
+        int r = nodeSearch(g->array[i], visited, &visited->curr);
+        if (r == 0) {
+            freeVisited(visited);
+            return 0;
+        }
     }
 
     for (int i = 0; i < (g->n); i++) {
-        int r = existsInArray(g->array[i]->x, visited, curr);
-        if (r == 0) return 0;
+        int r = existsInArray(g->array[i]->x, visited->array, visited->curr);
+        if (r == 0) {
+            freeVisited(visited);
+            return 0;
+        }
     }
+    freeVisited(visited);
     return 1;
 }
 
-
-// int checkHamiltonian(graph *g) {
-    // int *visited;
-    // visited = malloc(sizeof(int));
-
-    // for (int i = 0; i < (g->n - 1); i++) {
-        
-    // }
-
-    // return 0;
-// }
-
-// int checkHamiltonian(graph *g) {
+int checkHamiltonian(graph *g) {
     // for (int i = 0; i < g->n; i++) {
         // node *start = g->array[i];
-        // static int *visited;
-        // visited = malloc(sizeof(int));
+        // int visited[200];
         // visited[0] = start->x;
-        // int c = 1;
+        // int curr = 1;
+
         // for (int i = 0; i < start->currentItems - 1; i++) {
-            // int r = existsInArray(start->edges[i], visited);
+            // int r = existsInArray(start->edges[i]->x, visited, curr);
             // if (r == 0) {
-                // visited = realloc(visited, (c+1)*sizeof(int));
-                // visited[c] = start->edges[i]->x;
-                // c++;
+                // visited[curr] = start->edges[i]->x;
+                // curr++;
             // }
         // }
-        // int size = sizeof(visited) / sizeof(int);
-        // for (int i = 0; i < size - 1; i++) {
-            // printf("%d ",visited[i]);
-        // }
-        // printf("\n");
-        // printf("size: %d size g: %d\n",size, g->n);
-        // if (size == (g->n)) return 1;
-        // free(visited);
     // }
-    // return 0;
-// }
+    return 0;
+}
 
 //Parses string and creates graph
 graph *parseString(char string[]) {
@@ -371,7 +377,7 @@ int main(int n, char *args[n]) {
             printf("Number of edges: %d\n",numEdges(g));
             printf("Average number of edges per node: %.1f\n", avgEdges(g));
             printf("Is tree?: %s\n", trueOrFalse(isTree(g)));
-            //printf("Hamiltonian?: %d\n",checkHamiltonian(g));
+            printf("Hamiltonian?: %d\n",checkHamiltonian(g));
             freeGraph(g);
         } else {
             printf("Error with inputs\n");
