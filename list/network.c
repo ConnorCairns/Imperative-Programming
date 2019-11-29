@@ -145,6 +145,7 @@ int numEdges(graph *g) {
     return num;
 }
 
+//Checks if int is in array, returns 1 for in array, 0 for not in array
 int existsInArray(int n, int *visited, const int curr) {
     for (int i = 0; i < curr; i++) {
         if (n == visited[i]) return 1;
@@ -152,33 +153,41 @@ int existsInArray(int n, int *visited, const int curr) {
     return 0;
 }
 
-int nodeSearch(node *n, visited *visited, int *curr) {
+//For every edge of a node, checks if it is already in the visited array, if so return 0 (there is a cycle in the graph)
+//else increases size of array and adds the unexplored node to the array
+int nodeSearch(node *n, visited *visited) {
     int items = n->currentItems;
     for (int i = 0; i < items; i++) {
-        int r = existsInArray(n->edges[i]->x, visited->array, *curr);
+        int r = existsInArray(n->edges[i]->x, visited->array, visited->curr);
         if (r == 1) return 0;
         else {
-            visited->array = realloc(visited->array, (*curr + 1) * sizeof(int));
-            visited->array[*curr] = n->edges[i]->x;
-            *curr = *curr + 1;
+            visited->array = realloc(visited->array, (visited->curr + 1) * sizeof(int));
+            visited->array[visited->curr] = n->edges[i]->x;
+            visited->curr++;
         }
     } 
     return 1;
 }
 
+//Checks if graph is tree, 0 is not tree, 1 is tree
 int isTree(graph *g) {
     visited *visited = newVisited();
+    //Setting first element of array to first node in graph
     visited->array[0] = g->array[0]->x;
     visited->curr++;
 
+    //Checks if each node is in the array and if not adds it to visited
     for (int i = 0; i < (g->n); i++) {
-        int r = nodeSearch(g->array[i], visited, &visited->curr);
+        int r = nodeSearch(g->array[i], visited);
+        //If node already existed in array meaning there was a cycle
         if (r == 0) {
             freeVisited(visited);
             return 0;
         }
     }
 
+    //Checks every node in the graph is in the visited array
+    //If a node is not in the visited array the graph is not a tree
     for (int i = 0; i < (g->n); i++) {
         int r = existsInArray(g->array[i]->x, visited->array, visited->curr);
         if (r == 0) {
@@ -188,24 +197,6 @@ int isTree(graph *g) {
     }
     freeVisited(visited);
     return 1;
-}
-
-int checkHamiltonian(graph *g) {
-    // for (int i = 0; i < g->n; i++) {
-        // node *start = g->array[i];
-        // int visited[200];
-        // visited[0] = start->x;
-        // int curr = 1;
-
-        // for (int i = 0; i < start->currentItems - 1; i++) {
-            // int r = existsInArray(start->edges[i]->x, visited, curr);
-            // if (r == 0) {
-                // visited[curr] = start->edges[i]->x;
-                // curr++;
-            // }
-        // }
-    // }
-    return 0;
 }
 
 //Parses string and creates graph
@@ -377,7 +368,6 @@ int main(int n, char *args[n]) {
             printf("Number of edges: %d\n",numEdges(g));
             printf("Average number of edges per node: %.1f\n", avgEdges(g));
             printf("Is tree?: %s\n", trueOrFalse(isTree(g)));
-            printf("Hamiltonian?: %d\n",checkHamiltonian(g));
             freeGraph(g);
         } else {
             printf("Error with inputs\n");
