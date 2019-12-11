@@ -59,13 +59,10 @@ void selectTool(display *d, state *s, int operand) {
   else if (operand == SHOW) show(d);
   else if (operand == PAUSE) pause(d, s->data);
   else if (operand == NEXTFRAME) {
-    //s->start--;
-    printf("%d\n",s->start);
     s->end = true;
   }
   else s->tool = operand;
   s->data = 0;
-  //s->start++;
 }
 
 void data(state *s, int operand) {
@@ -101,12 +98,17 @@ bool processSketch(display *d, void *data, const char pressedKey) {
   FILE *f = fopen(filename, "rb");
   if (f == NULL | data == NULL) return (pressedKey == 27);
   state *s = (state*) data;
-  if (s->end) printf("hahayes\n");
 
+  fseek(f, s->start, SEEK_SET);
   while (! feof(f) && ! s->end) {
     byte b = fgetc(f);
-    s->start++;
     obey(d, s, b);
+  }
+  if (s->end) {
+    s->start = ftell(f);
+  }
+  if (feof(f)) {
+    s->start = 0;
   }
   fclose(f);
 
