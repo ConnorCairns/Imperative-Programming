@@ -104,24 +104,14 @@ bool processSketch(display *d, void *data, const char pressedKey) {
     byte b = fgetc(f);
     obey(d, s, b);
   }
-  if (s->end) {
-    s->start = ftell(f);
-  }
-  if (feof(f)) {
-    s->start = 0;
-  }
+
+  if (s->end) s->start = ftell(f);
+  if (feof(f)) s->start = 0;
   fclose(f);
 
-    //TO DO: OPEN, PROCESS/DRAW A SKETCH FILE BYTE BY BYTE, THEN CLOSE IT
-    //NOTE: CHECK DATA HAS BEEN INITIALISED... if (data == NULL) return (pressedKey == 27);
-    //NOTE: TO GET ACCESS TO THE DRAWING STATE USE... state *s = (state*) data;
-    //NOTE: TO GET THE FILENAME... char *filename = getName(d);
-    //NOTE: DO NOT FORGET TO CALL show(d); AND TO RESET THE DRAWING STATE APART
-    //      THE 'START' FIELD AFTER CLOSING THE FILE
   show(d);
-  s->x = s->y = s->tx = s->ty = s->data = 0;
+  s->x = s->y = s->tx = s->ty = s->data = s->end = 0;
   s->tool = LINE;
-  s->end = false;
   return (pressedKey == 27);
 }
 
