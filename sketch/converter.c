@@ -26,20 +26,23 @@ void pgmToSk(char *filename) {
     printf("%s\n",height);
     printf("%s\n",maxval);
 
-    // char haha[100];
-    // fgets(haha, 100, f);
-    // printf("haha: %s\n",haha);
-    // fgets(haha, 100, f);
-    // printf("haha 2: %s\n",haha);
-    // fgets(haha, 100, f);
-    // printf("haha 3: %s\n",haha);
-    char haha[100];
-    fgets(haha, 99, f);
-    while (!feof(f)) {
-        printf("%s\n",haha);
-        fgets(haha, 99, f);
-        
+    unsigned char image[atoi(height)][atoi(width)];
+
+    unsigned char b = fgetc(f);
+    for (int i = 0; i < atoi(height); i++) {
+        for (int j = 0; j < atoi(width); j++) {
+            if (b == '\n') continue;
+            image[i][j] = b;
+            b = fgetc(f);
+        }
     }
+    for (int i = 0; i < atoi(height); i++) {
+        for (int j = 0; j < atoi(width); j++) {
+            printf("%d ",image[i][j]);
+        }
+    }
+    printf("\n");
+
     fclose(f);
 }
 
