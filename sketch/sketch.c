@@ -58,15 +58,13 @@ void selectTool(display *d, state *s, int operand) {
   else if (operand == TARGETY) s->ty = s->data;
   else if (operand == SHOW) show(d);
   else if (operand == PAUSE) pause(d, s->data);
-  else if (operand == NEXTFRAME) {
-    s->end = true;
-  }
+  else if (operand == NEXTFRAME) s->end = true;
   else s->tool = operand;
   s->data = 0;
 }
 
 void data(state *s, int operand) {
-  s->data = (s->data << 6) | (operand & MASK_SIGNIFICANT);
+  s->data = (s->data << OPCODE_SHIFT) | (operand & MASK_SIGNIFICANT);
 }
 
 // Execute the next byte of the command sequence.
@@ -120,8 +118,8 @@ void view(char *filename) {
   display *d = newDisplay(filename, 200, 200);
   state *s = newState();
   run(d, s, processSketch);
-  freeState(s);
   freeDisplay(d);
+  freeState(s);
 }
 
 // Include a main function only if we are not testing (make sketch),
