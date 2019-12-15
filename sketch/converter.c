@@ -11,7 +11,7 @@ typedef struct command {
 
 typedef struct commandArray {
     int n;
-    command **array;
+    struct command **array;
 } commandArray;
 
 command *newCommand(int tx, int ty, int colour, int count) {
@@ -29,60 +29,41 @@ commandArray *newCommandArray() {
     commandArray *new;
     new = malloc(sizeof(commandArray));
     new->array = malloc(sizeof(command));
-    new->n = 1;
+    new->n = 0;
     return new;
 }
 
-void freeArray(commandArray *commandArray) {
-    for(int i = 0; i < commandArray->n; i++) {
-        free(&commandArray->array[i]);
-    }
-    free(commandArray);
+void freeArray(commandArray *cArray) {
+    // for(int i = 0; i < cArray->n; i++) {
+        // free(cArray->array[i]);
+    // }
+    free(cArray->array);
+    free(cArray);
 }
 
 void addCommand(command *c, commandArray *a) {
     int size = sizeof(command) * (a->n + 1);
-    a = realloc(a, size);
-    //printf("%d\n",a->n);
+    a->array = realloc(a->array, size);
     a->array[a->n] = c;
     a->n++;
-
 }
 
 void encode(int height, int width, unsigned char image[height][width]) {
-    int colour, count = 1;
+    int count = 1;
     commandArray *cArray = newCommandArray();
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
             if ((j+1) < width) {
-                if (j == width-1) {
-                    command *temp = newCommand((j-1), i, colour, count);
-                    addCommand(temp, cArray);
-                    printf("%d\n",j);
-                    printf("hahayes\n");
-                    count = 1;
-                    // ty = i;
-                    // tx = j - 1;
-                } else if (image[i][j] == image[i][j+1]) {
-                    colour = image[i][j];
+                while ((j+2) < width & image[i][j] == image[i][j+1]) {
                     count++;
-                } else {
-                    printf("haha no\n");
-                    command *temp = newCommand((j-1), i, colour, count);
-                    addCommand(temp, cArray);
-                    count = 1;
+                    j++;
                 }
+                command *temp = newCommand(j, i, image[i][j], count);
+                addCommand(temp, cArray);
+                count = 1;
             }
         }
-        //printf("%d: %d count: %d\n",i,colour, count);
-        count = 1;
     }
-    // for (int i = 0; i < height; i++) {
-        // for (int j = 0; j < width; j++) {
-            
-        // }
-    // }
-
     printf("%d\n",cArray->n);
     for(int i = 0; i < cArray->n; i++) {
         printf("col:%d x:%d y:%d\n",cArray->array[i]->colour,cArray->array[i]->x,cArray->array[i]->y);
