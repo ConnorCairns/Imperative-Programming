@@ -21,7 +21,7 @@ command *newCommand(int tx, int ty, int colour, int count) {
     new->ty = ty;
     new->colour = colour;
     new->x = tx - count;
-    new->y = ty - count;
+    new->y = ty;
     return new;
 }
 
@@ -34,9 +34,9 @@ commandArray *newCommandArray() {
 }
 
 void freeArray(commandArray *cArray) {
-    // for(int i = 0; i < cArray->n; i++) {
-        // free(cArray->array[i]);
-    // }
+    for(int i = 0; i < cArray->n; i++) {
+        free(cArray->array[i]);
+    }
     free(cArray->array);
     free(cArray);
 }
@@ -49,7 +49,7 @@ void addCommand(command *c, commandArray *a) {
 }
 
 void encode(int height, int width, unsigned char image[height][width]) {
-    int count = 1;
+    int count = 0;
     commandArray *cArray = newCommandArray();
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
@@ -60,14 +60,14 @@ void encode(int height, int width, unsigned char image[height][width]) {
                 }
                 command *temp = newCommand(j, i, image[i][j], count);
                 addCommand(temp, cArray);
-                count = 1;
+                count = 0;
             }
         }
     }
-    printf("%d\n",cArray->n);
-    for(int i = 0; i < cArray->n; i++) {
-        printf("col:%d x:%d y:%d\n",cArray->array[i]->colour,cArray->array[i]->x,cArray->array[i]->y);
-    }
+    // printf("%d\n",cArray->n);
+    // for(int i = 0; i < cArray->n; i++) {
+        // printf("x:%d tx:%d y:%d ty:%d\n",cArray->array[i]->x,cArray->array[i]->tx, cArray->array[i]->y, cArray->array[i]->ty);
+    // }
     freeArray(cArray);
 }
 
