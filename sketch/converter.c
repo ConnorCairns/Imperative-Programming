@@ -48,7 +48,17 @@ void addCommand(command *c, commandArray *a) {
     a->n++;
 }
 
-void encode(int height, int width, unsigned char image[height][width]) {
+void createFile(commandArray *a, char *filename) {
+    strtok(filename, ".");
+    strcat(filename, ".sk");
+    FILE *f = fopen(filename, "wb");
+    if (f == NULL) {
+        fprintf(stderr, "Cannot open %s\n",filename);
+        exit(1);
+    }
+}
+
+commandArray *encode(int height, int width, unsigned char image[height][width]) {
     int count = 0;
     commandArray *cArray = newCommandArray();
     for (int i = 0; i < height; i++) {
@@ -68,7 +78,7 @@ void encode(int height, int width, unsigned char image[height][width]) {
     // for(int i = 0; i < cArray->n; i++) {
         // printf("x:%d tx:%d y:%d ty:%d\n",cArray->array[i]->x,cArray->array[i]->tx, cArray->array[i]->y, cArray->array[i]->ty);
     // }
-    freeArray(cArray);
+    return cArray;
 }
 
 void pgmToSk(char *filename) {
@@ -99,14 +109,15 @@ void pgmToSk(char *filename) {
             b = fgetc(f);
         }
     }
-    encode(atoi(height), atoi(width), image);
+    commandArray *c = encode(atoi(height), atoi(width), image);
+    createFile(c, filename);
     // for (int i = 0; i < atoi(height); i++) {
         // for (int j = 0; j < atoi(width); j++) {
             // printf("%d ",image[i][j]);
         // }
     // }
     // printf("\n");
-
+    freeArray(c);
     fclose(f);
 }
 
