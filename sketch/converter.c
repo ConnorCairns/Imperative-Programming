@@ -4,6 +4,8 @@
 
 #define LENGTH 5
 #define ARRAY_LENGTH 6
+#define MAX_DATA 31
+#define DATA 192
 
 typedef struct command {
     int x, y, tx, ty, colour;
@@ -48,7 +50,7 @@ void addCommand(command *c, commandArray *a) {
     a->n++;
 }
 
-void createFile(commandArray *a, char *filename) {
+FILE *createFile(commandArray *a, char *filename) {
     strtok(filename, ".");
     strcat(filename, ".sk");
     FILE *f = fopen(filename, "wb");
@@ -56,6 +58,7 @@ void createFile(commandArray *a, char *filename) {
         fprintf(stderr, "Cannot open %s\n",filename);
         exit(1);
     }
+    return f;
 }
 
 commandArray *encode(int height, int width, unsigned char image[height][width]) {
@@ -79,6 +82,19 @@ commandArray *encode(int height, int width, unsigned char image[height][width]) 
         // printf("x:%d tx:%d y:%d ty:%d\n",cArray->array[i]->x,cArray->array[i]->tx, cArray->array[i]->y, cArray->array[i]->ty);
     // }
     return cArray;
+}
+
+//data +192
+//tool +128 line = 1
+void addToFile(FILE *f, commandArray *a) {
+    for(int i = 0; i < a->n; i++) {
+        unsigned char colour = a->array[i]->colour;
+        while (colour > MAX_DATA) {
+            fputc(MAX_DATA + DATA, f);
+            colour -= MAX_DATA;
+        }
+        if(colour > 0) fputc(DATA + colour, f);
+    }
 }
 
 void pgmToSk(char *filename) {
@@ -110,7 +126,8 @@ void pgmToSk(char *filename) {
         }
     }
     commandArray *c = encode(atoi(height), atoi(width), image);
-    createFile(c, filename);
+    FILE *skFile = createFile(c, filename);
+    addToFile(skFile, c);
     // for (int i = 0; i < atoi(height); i++) {
         // for (int j = 0; j < atoi(width); j++) {
             // printf("%d ",image[i][j]);
@@ -119,6 +136,7 @@ void pgmToSk(char *filename) {
     // printf("\n");
     freeArray(c);
     fclose(f);
+    fclose(skFile);
 }
 
 void process(char *filename) {
@@ -136,6 +154,5 @@ int main(int n, char *args[n]) {
         printf("Usage: ./converter [filename]\n");
         exit(1);
     }
-    //freeArray();
     return 0;
 }
