@@ -6,6 +6,7 @@
 #define ARRAY_LENGTH 6
 #define MAX_DATA 31
 #define DATA 192
+#define DY 64
 
 typedef struct command {
     int x, y, tx, ty, colour;
@@ -94,6 +95,9 @@ void addToFile(FILE *f, commandArray *a) {
             colour -= MAX_DATA;
         }
         if(colour > 0) fputc(DATA + colour, f);
+
+        fputc(a->array[i]->tx, f);
+        fputc(a->array[i]->ty, f);
     }
 }
 
