@@ -4,9 +4,15 @@
 
 #define LENGTH 5
 #define ARRAY_LENGTH 6
-#define MAX_DATA 31
+#define MAX_DATA 63
 #define DATA 192
 #define DY 64
+#define TOOL 128
+#define COLOUR 3
+#define TARGETX 4
+#define TARGETY 5
+#define DY 64
+#define BLOCK 2
 
 typedef struct command {
     int x, y, tx, ty, colour;
@@ -85,19 +91,56 @@ commandArray *encode(int height, int width, unsigned char image[height][width]) 
     return cArray;
 }
 
-//data +192
-//tool +128 line = 1
 void addToFile(FILE *f, commandArray *a) {
+    fputc(TOOL, f);
+    fputc(DATA, f);
+    fputc(DATA, f);
+    fputc(DATA, f);
     for(int i = 0; i < a->n; i++) {
-        unsigned char colour = a->array[i]->colour;
-        while (colour > MAX_DATA) {
-            fputc(MAX_DATA + DATA, f);
+        printf("%d: c:%d x:%d y:%d\n",i, a->array[i]->colour, a->array[i]->tx, a->array[i]->ty);
+        int colour = 255;
+        while (colour >= MAX_DATA) {
+            fputc(MAX_DATA | DATA, f);
             colour -= MAX_DATA;
         }
-        if(colour > 0) fputc(DATA + colour, f);
+        if (colour > 0) fputc(DATA | colour, f);
+        fputc(TOOL | COLOUR, f);
 
-        fputc(a->array[i]->tx, f);
-        fputc(a->array[i]->ty, f);
+        fputc(TOOL | 1, f);
+        int tx = a->array[i]->tx;
+        while (tx >= MAX_DATA) {
+            fputc(MAX_DATA | DATA, f);
+            tx -= MAX_DATA;
+        }
+        if (tx > 0) fputc(DATA | tx, f);
+        fputc(TOOL | TARGETX, f);
+        
+        int ty = a->array[i]->ty;
+        while (ty >= MAX_DATA) {
+            fputc(MAX_DATA | DATA, f);
+            ty -= MAX_DATA;
+        }
+        if (ty > 0) fputc(DATA | ty, f);
+        fputc(TOOL | TARGETY, f);
+        fputc(DY, f);
+
+        fputc(TOOL, f);
+        // int x = a->array[i]->tx;
+        // while (x >= MAX_DATA) {
+            // fputc(MAX_DATA | DATA, f);
+            // x -= MAX_DATA;
+        // }
+        // if (x > 0) fputc(DATA | x, f);
+        fputc(TOOL | TARGETX, f);
+        
+        int y = a->array[i]->ty + 1;
+        while (y >= MAX_DATA) {
+            fputc(MAX_DATA | DATA, f);
+            y -= MAX_DATA;
+        }
+        if (y > 0) fputc(DATA | y, f);
+        fputc(TOOL | TARGETY, f);
+        fputc(DY, f);
     }
 }
 
@@ -147,7 +190,7 @@ void process(char *filename) {
     char *str = filename;
     char *token = strtok(str, ".");
     token = strtok(NULL, ".");
-    
+
     if (strcmp(token, "pgm") == 0) pgmToSk(filename);
 }
 
