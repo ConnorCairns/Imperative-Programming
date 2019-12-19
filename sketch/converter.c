@@ -12,7 +12,6 @@
 #define COLOUR 3
 #define TARGETX 4
 #define TARGETY 5
-#define DY 64
 #define BLOCK 2
 
 typedef struct command {
@@ -69,6 +68,7 @@ FILE *createFile(commandArray *a, char *filename) {
     return f;
 }
 
+//Uses run length encoding on x axis to encode image array
 commandArray *encode(int height, int width, unsigned char image[height][width]) {
     int count = 0;
     commandArray *cArray = newCommandArray();
@@ -85,33 +85,40 @@ commandArray *encode(int height, int width, unsigned char image[height][width]) 
             }
         }
     }
-    // printf("%d\n",cArray->n);
-    // for(int i = 0; i < cArray->n; i++) {
-        // printf("x:%d tx:%d y:%d ty:%d\n",cArray->array[i]->x,cArray->array[i]->tx, cArray->array[i]->y, cArray->array[i]->ty);
-    // }
     return cArray;
 }
 
+//Calls DATA 6 times to fill up 32bit data value
 void addData(FILE *f, int val) {
     uint8_t temp = 0;
+    int count = 0;
     for (int i = 5; i >= 0; i--) {
+        //Shifts bits to split it into 6 different DATA calls and masks result with MAX_DATA to get only 6 bits
         temp = (val >> 6*i) & MAX_DATA;
-        fputc(DATA | temp, f);
+        //Count is used as a flag to see if there has been any data other than 0
+        if (temp != 0) count++;
+        //Data will only be added when it starts to have a non zero value, stopping uneccesary data calls
+        if (count > 0) fputc(DATA | temp, f);
     }
 }
 
 void addToFile(FILE *f, commandArray *a, int width) {
     for(int i = 0; i < a->n; i++) {
-        //printf("%d: c:%d x:%d y:%d\n",i, a->array[i]->colour, a->array[i]->tx, a->array[i]->ty);
-        int c = a->array[i]->colour;
+        //Scaling colour to RGBA
+        unsigned int c = a->array[i]->colour;
+        //For greyscale RGB values all need to be the same so c is shifted by 8, 16 and 24 so colour has the same 8 bits of binary 3 times
+        //A 1 is added at the end for A to make the image be at 0% opacity
         unsigned int colour = (c << 8) + (c << 16) + (c << 24) + 1;
+        //Using DATA to add colour value
         if (colour >= MAX_DATA) {
             addData(f, colour);
         } else fputc(DATA | colour, f);
         fputc(TOOL | COLOUR, f);
 
+        //Changing tool to LINE
         fputc(TOOL | 1, f);
 
+        //Using DATA to add TARGETX value
         int tx = a->array[i]->tx;
         int tempx = tx;
         if (tx >= MAX_DATA) {
@@ -119,32 +126,27 @@ void addToFile(FILE *f, commandArray *a, int width) {
         } else fputc(DATA | tx, f);
         fputc(TOOL | TARGETX, f);
 
+        //Using DATA to add TARGETY value
         int ty = a->array[i]->ty;
+        int tempy = a->array[i]->ty + 1;
         if (ty >= MAX_DATA) {
             addData(f, ty);
         } else fputc(DATA | ty, f);
         fputc(TOOL | TARGETY, f);
 
+        //Calling DY to draw line
         fputc(DY, f);
 
-        fputc(TOOL, f);
-
+        //If reached the end of the line, reset x and increment y value
         if(tempx == width-2) {
-            // if (tempx >= MAX_DATA) {
-                // uint8_t temp = (tempx & 0x3F000) >> 12;
-                // fputc(DATA | temp, f);
-                // temp = (tempx & 0xFC0) >> 6;
-                // fputc(DATA | temp, f);
-                // temp = tempx & 0x3F;
-                // fputc(DATA | temp, f);
-            // } else fputc(DATA | tempx, f);
-            fputc(TOOL | TARGETX, f); //might have to comment this
-
-            int tempy = a->array[i]->ty + 1;
+            fputc(TOOL, f);
+            addData(f, 0);
+            fputc(TOOL | TARGETX, f);   
+            //addData(f, tempy);
             if (tempy >= MAX_DATA) {
                addData(f, tempy);
             } else fputc(DATA | tempy, f);
-            fputc(TOOL | TARGETY , f);
+            fputc(TOOL | TARGETY, f);
             fputc(DY, f);
         }
     }
@@ -159,8 +161,14 @@ void pgmToSk(char *filename) {
         exit(1);
     }
 
-    fseek(f, 3, SEEK_SET);
-
+    //Checking file has P5 at start to make sure it it the correct format
+    char format[ARRAY_LENGTH];
+    fgets(format, 4, f);
+    if (!(strcmp(format, "P5 ") == 0)) {
+        fprintf(stderr, "File not of type P5\n");
+        exit(1);
+    }
+    //Getting width, height and max greyval
     char width[ARRAY_LENGTH];
     char height[ARRAY_LENGTH];
     char maxval[ARRAY_LENGTH];
@@ -170,28 +178,25 @@ void pgmToSk(char *filename) {
 
     unsigned char image[atoi(height)][atoi(width)];
 
+    //Getting each byte from the file and adding it to image array
     unsigned char b = fgetc(f);
     for (int i = 0; i < atoi(height); i++) {
         for (int j = 0; j < atoi(width); j++) {
-            if (b == '\n') continue;
             image[i][j] = b;
             b = fgetc(f);
         }
     }
+
     commandArray *c = encode(atoi(height), atoi(width), image);
     FILE *skFile = createFile(c, filename);
     addToFile(skFile, c, atoi(width));
-    // for (int i = 0; i < atoi(height); i++) {
-        // for (int j = 0; j < atoi(width); j++) {
-            // printf("%d ",image[i][j]);
-        // }
-    // }
-    // printf("\n");
     freeArray(c);
     fclose(f);
     fclose(skFile);
+    printf("Written to %s\n",filename);
 }
 
+//Check file has extension .pgm
 void process(char *filename) {
     char *str = filename;
     char *token = strtok(str, ".");
