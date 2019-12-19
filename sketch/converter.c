@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 #define LENGTH 5
 #define ARRAY_LENGTH 6
@@ -91,56 +92,73 @@ commandArray *encode(int height, int width, unsigned char image[height][width]) 
     return cArray;
 }
 
-void addToFile(FILE *f, commandArray *a) {
-    fputc(TOOL, f);
-    fputc(DATA, f);
-    fputc(DATA, f);
-    fputc(DATA, f);
+void addToFile(FILE *f, commandArray *a, int width) {
     for(int i = 0; i < a->n; i++) {
         printf("%d: c:%d x:%d y:%d\n",i, a->array[i]->colour, a->array[i]->tx, a->array[i]->ty);
-        int colour = 255;
-        while (colour >= MAX_DATA) {
-            fputc(MAX_DATA | DATA, f);
-            colour -= MAX_DATA;
-        }
-        if (colour > 0) fputc(DATA | colour, f);
+        int c = a->array[i]->colour;
+        unsigned int colour = (c << 8) + (c << 16) + (c << 24) + 1;
+        printf("%x\n",colour);
+        if (colour >= MAX_DATA) {
+            uint8_t temp = 0;
+            for (int i = 5; i >= 0; i--) {
+                temp = (colour >> 6*i) & MAX_DATA;
+                fputc(DATA | temp, f);
+            }
+        } else fputc(DATA | colour, f);
         fputc(TOOL | COLOUR, f);
 
         fputc(TOOL | 1, f);
+
         int tx = a->array[i]->tx;
-        while (tx >= MAX_DATA) {
-            fputc(MAX_DATA | DATA, f);
-            tx -= MAX_DATA;
-        }
-        if (tx > 0) fputc(DATA | tx, f);
+        int tempx = tx;
+        if (tx >= MAX_DATA) {
+            uint8_t temp = (tx & 0x3F000) >> 12;
+            fputc(DATA | temp, f);
+            temp = (tx & 0xFC0) >> 6;
+            fputc(DATA | temp, f);
+            temp = tx & 0x3F;  
+            fputc(DATA | temp, f);
+        } else fputc(DATA | tx, f);
         fputc(TOOL | TARGETX, f);
-        
+
         int ty = a->array[i]->ty;
-        while (ty >= MAX_DATA) {
-            fputc(MAX_DATA | DATA, f);
-            ty -= MAX_DATA;
-        }
-        if (ty > 0) fputc(DATA | ty, f);
+        if (ty >= MAX_DATA) {
+            uint8_t temp = (ty & 0x3F000) >> 12;
+            fputc(DATA | temp, f);
+                temp = (ty & 0xFC0) >> 6;
+            fputc(DATA | temp, f);
+            temp = ty & 0x3F;
+            fputc(DATA | temp, f);
+        } else fputc(DATA | ty, f);
         fputc(TOOL | TARGETY, f);
+
         fputc(DY, f);
 
         fputc(TOOL, f);
-        // int x = a->array[i]->tx;
-        // while (x >= MAX_DATA) {
-            // fputc(MAX_DATA | DATA, f);
-            // x -= MAX_DATA;
-        // }
-        // if (x > 0) fputc(DATA | x, f);
-        fputc(TOOL | TARGETX, f);
-        
-        int y = a->array[i]->ty + 1;
-        while (y >= MAX_DATA) {
-            fputc(MAX_DATA | DATA, f);
-            y -= MAX_DATA;
+
+        if(tempx == width-2) {
+            // if (tempx >= MAX_DATA) {
+                // uint8_t temp = (tempx & 0x3F000) >> 12;
+                // fputc(DATA | temp, f);
+                // temp = (tempx & 0xFC0) >> 6;
+                // fputc(DATA | temp, f);
+                // temp = tempx & 0x3F;
+                // fputc(DATA | temp, f);
+            // } else fputc(DATA | tempx, f);
+            fputc(TOOL | TARGETX, f); //might have to comment this
+
+            int tempy = a->array[i]->ty + 1;
+            if (tempy >= MAX_DATA) {
+                uint8_t temp = (tempy & 0x3F000) >> 12;
+                fputc(DATA | temp, f);
+                temp = (tempy & 0xFC0) >> 6;
+                fputc(DATA | temp, f);
+                temp = tempy & 0x3F;
+                fputc(DATA | temp, f);
+            } else fputc(DATA | tempy, f);
+            fputc(TOOL | TARGETY , f);
+            fputc(DY, f);
         }
-        if (y > 0) fputc(DATA | y, f);
-        fputc(TOOL | TARGETY, f);
-        fputc(DY, f);
     }
 }
 
@@ -174,7 +192,7 @@ void pgmToSk(char *filename) {
     }
     commandArray *c = encode(atoi(height), atoi(width), image);
     FILE *skFile = createFile(c, filename);
-    addToFile(skFile, c);
+    addToFile(skFile, c, atoi(width));
     // for (int i = 0; i < atoi(height); i++) {
         // for (int j = 0; j < atoi(width); j++) {
             // printf("%d ",image[i][j]);
