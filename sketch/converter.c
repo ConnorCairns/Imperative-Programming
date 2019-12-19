@@ -92,18 +92,21 @@ commandArray *encode(int height, int width, unsigned char image[height][width]) 
     return cArray;
 }
 
+void addData(FILE *f, int val) {
+    uint8_t temp = 0;
+    for (int i = 5; i >= 0; i--) {
+        temp = (val >> 6*i) & MAX_DATA;
+        fputc(DATA | temp, f);
+    }
+}
+
 void addToFile(FILE *f, commandArray *a, int width) {
     for(int i = 0; i < a->n; i++) {
-        printf("%d: c:%d x:%d y:%d\n",i, a->array[i]->colour, a->array[i]->tx, a->array[i]->ty);
+        //printf("%d: c:%d x:%d y:%d\n",i, a->array[i]->colour, a->array[i]->tx, a->array[i]->ty);
         int c = a->array[i]->colour;
         unsigned int colour = (c << 8) + (c << 16) + (c << 24) + 1;
-        printf("%x\n",colour);
         if (colour >= MAX_DATA) {
-            uint8_t temp = 0;
-            for (int i = 5; i >= 0; i--) {
-                temp = (colour >> 6*i) & MAX_DATA;
-                fputc(DATA | temp, f);
-            }
+            addData(f, colour);
         } else fputc(DATA | colour, f);
         fputc(TOOL | COLOUR, f);
 
@@ -112,23 +115,13 @@ void addToFile(FILE *f, commandArray *a, int width) {
         int tx = a->array[i]->tx;
         int tempx = tx;
         if (tx >= MAX_DATA) {
-            uint8_t temp = (tx & 0x3F000) >> 12;
-            fputc(DATA | temp, f);
-            temp = (tx & 0xFC0) >> 6;
-            fputc(DATA | temp, f);
-            temp = tx & 0x3F;  
-            fputc(DATA | temp, f);
+            addData(f, tx);
         } else fputc(DATA | tx, f);
         fputc(TOOL | TARGETX, f);
 
         int ty = a->array[i]->ty;
         if (ty >= MAX_DATA) {
-            uint8_t temp = (ty & 0x3F000) >> 12;
-            fputc(DATA | temp, f);
-                temp = (ty & 0xFC0) >> 6;
-            fputc(DATA | temp, f);
-            temp = ty & 0x3F;
-            fputc(DATA | temp, f);
+            addData(f, ty);
         } else fputc(DATA | ty, f);
         fputc(TOOL | TARGETY, f);
 
@@ -149,12 +142,7 @@ void addToFile(FILE *f, commandArray *a, int width) {
 
             int tempy = a->array[i]->ty + 1;
             if (tempy >= MAX_DATA) {
-                uint8_t temp = (tempy & 0x3F000) >> 12;
-                fputc(DATA | temp, f);
-                temp = (tempy & 0xFC0) >> 6;
-                fputc(DATA | temp, f);
-                temp = tempy & 0x3F;
-                fputc(DATA | temp, f);
+               addData(f, tempy);
             } else fputc(DATA | tempy, f);
             fputc(TOOL | TARGETY , f);
             fputc(DY, f);
