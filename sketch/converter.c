@@ -50,6 +50,7 @@ void freeArray(commandArray *cArray) {
     free(cArray);
 }
 
+//Reallocs command array to create room for new command and adds command
 void addCommand(command *c, commandArray *a) {
     int size = sizeof(command) * (a->n + 1);
     a->array = realloc(a->array, size);
@@ -57,6 +58,9 @@ void addCommand(command *c, commandArray *a) {
     a->n++;
 }
 
+//Uses strtok to split string to have no extension, then adds ".sk"
+//Opens "filename.sk" as "wb" to write binary which will create the file
+//If file is not created (f == NULL) program will print an error
 FILE *createFile(commandArray *a, char *filename) {
     strtok(filename, ".");
     strcat(filename, ".sk");
@@ -107,7 +111,7 @@ void addToFile(FILE *f, commandArray *a, int width) {
         //Scaling colour to RGBA
         unsigned int c = a->array[i]->colour;
         //For greyscale RGB values all need to be the same so c is shifted by 8, 16 and 24 so colour has the same 8 bits of binary 3 times
-        //A 1 is added at the end for A to make the image be at 0% opacity
+        //A 1 is added at the end for A to make the image be at 100% opacity
         unsigned int colour = (c << 8) + (c << 16) + (c << 24) + 1;
         //Using DATA to add colour value
         if (colour >= MAX_DATA) {
